@@ -1,0 +1,16 @@
+.card {
+    background-color: #f4dc26;
+    border: 2.5px solid black;
+    border-radius: 15px;
+    width: 17.5vw;
+    height: 19vh;
+}
+
+.card:hover {
+    opacity: .7;
+}
+
+p {
+   font-size: 20px;
+   margin-bottom: 0;
+}
