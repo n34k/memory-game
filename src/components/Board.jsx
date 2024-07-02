@@ -7,6 +7,8 @@ import axios from 'axios';
 function Board({ updateCurrScore, updateHighScore }) {
     const [pokemonList, setPokemonList] = useState([]);
     const [chosenList, setChosenList] = useState([]);
+    const [gameOver, setGameOver] = useState(false);
+    const [win, setWin] = useState(false);
 
     useEffect(() => {
         fetchRandomPokemonNames();
@@ -15,20 +17,30 @@ function Board({ updateCurrScore, updateHighScore }) {
     const fetchRandomPokemonNames = async () => {
         try {
             const promises = [];
-            const maxPokemon = 809; 
-
+            const maxPokemon = 809;
+            const selectedIds = new Set();
+    
             for (let i = 0; i < 16; i++) {
-                const randomId = Math.floor(Math.random() * maxPokemon) + 1;
+                let randomId;
+    
+                // Generate a unique random ID
+                do {
+                    randomId = Math.floor(Math.random() * maxPokemon) + 1;
+                } while (selectedIds.has(randomId));
+    
+                selectedIds.add(randomId);
                 promises.push(axios.get(`https://pokeapi.co/api/v2/pokemon/${randomId}`));
             }
-
+    
             const responses = await Promise.all(promises);
             const newPokemonList = responses.map(response => response.data.name);
+            setGameOver(false);
             setPokemonList(newPokemonList);
         } catch (error) {
             console.error("Error fetching Pokémon names:", error);
         }
     };
+    
 
     const inArray = (pokemon) => {
         return chosenList.includes(pokemon);
@@ -47,15 +59,19 @@ function Board({ updateCurrScore, updateHighScore }) {
         if (inArray(pokemon)) {
             setChosenList([]);
             updateCurrScore(false);
-            console.log("You Lose");
-            fetchRandomPokemonNames(); // Reset the game with new random Pokémon names
-        } else {
+            setWin(false);
+            setGameOver(true);
+        } 
+        else {
             setChosenList([...chosenList, pokemon]);
             updateCurrScore(true);
             updateHighScore();
         }
-        if (chosenList.length === 16) {
-            console.log("You win");
+        if (chosenList.length === 15) {
+            setChosenList([]);
+            updateCurrScore(false);
+            setWin(true);
+            setGameOver(true);
         }
 
         setPokemonList(shuffleList());
@@ -63,6 +79,22 @@ function Board({ updateCurrScore, updateHighScore }) {
 
     return (
         <div className='board'>
+            {gameOver ? <div className="endScreen"> 
+                            <div className="modal">
+                                {!win ?
+                                <div className="modalTop">
+                                    <img className="sprite" src="src/assets/magikarp.gif" alt="magikarp"/>
+                                    <h1>Game Over</h1>
+                                    <img className="sprite" src="src/assets/magikarp.gif" alt="magikarp"/>
+                                </div> :
+                                <div className="modalTop">
+                                    <img className="sprite" src="src/assets/victini.gif" alt="victini"/>
+                                    <h1>You Win!</h1>
+                                    <img className="sprite" src="src/assets/celebi.gif" alt="celebi"/>
+                                </div>}
+                                <button onClick={fetchRandomPokemonNames}>New Game</button>
+                            </div>
+                        </div> : ''}
             {pokemonList.map((pokemon, index) => (
                 <Card key={index} pokemonName={pokemon} onClick={() => onClick(pokemon)} />
             ))}

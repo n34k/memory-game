@@ -11,7 +11,6 @@ function App() {
   const updateCurrScore = (procedure) => {
     if(procedure) setCurrScore(currScore + 1);
     else setCurrScore(0);
-    console.log(currScore);
   }
 
   const updateHighScore = () => {
