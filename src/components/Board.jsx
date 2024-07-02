@@ -1,15 +1,34 @@
-import "../styles/Board.css"
-import { useState } from 'react';
+import "../styles/Board.css";
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Card from './Card';
+import axios from 'axios';
 
-function Board({updateCurrScore, updateHighScore}) {
-    const [pokemonList, setPokemonList] = useState([
-        'gliscor', 'jolteon', 'mawile', 'gyarados', 'charizard', 'metagross', 'gengar', 'lucario',
-        'dragonite', 'salamence', 'groudon', 'greninja', 'tyranitar', 'blaziken', 'zapdos', 'mewtwo'
-    ]);
-
+function Board({ updateCurrScore, updateHighScore }) {
+    const [pokemonList, setPokemonList] = useState([]);
     const [chosenList, setChosenList] = useState([]);
+
+    useEffect(() => {
+        fetchRandomPokemonNames();
+    }, []);
+
+    const fetchRandomPokemonNames = async () => {
+        try {
+            const promises = [];
+            const maxPokemon = 809; 
+
+            for (let i = 0; i < 16; i++) {
+                const randomId = Math.floor(Math.random() * maxPokemon) + 1;
+                promises.push(axios.get(`https://pokeapi.co/api/v2/pokemon/${randomId}`));
+            }
+
+            const responses = await Promise.all(promises);
+            const newPokemonList = responses.map(response => response.data.name);
+            setPokemonList(newPokemonList);
+        } catch (error) {
+            console.error("Error fetching Pokémon names:", error);
+        }
+    };
 
     const inArray = (pokemon) => {
         return chosenList.includes(pokemon);
@@ -29,12 +48,13 @@ function Board({updateCurrScore, updateHighScore}) {
             setChosenList([]);
             updateCurrScore(false);
             console.log("You Lose");
+            fetchRandomPokemonNames(); // Reset the game with new random Pokémon names
         } else {
             setChosenList([...chosenList, pokemon]);
             updateCurrScore(true);
             updateHighScore();
         }
-        if (chosenList.length == 16) {
+        if (chosenList.length === 16) {
             console.log("You win");
         }
 
@@ -51,7 +71,6 @@ function Board({updateCurrScore, updateHighScore}) {
 }
 
 Board.propTypes = {
-    pokemonList: PropTypes.arrayOf(PropTypes.string),
     updateCurrScore: PropTypes.func.isRequired,
     updateHighScore: PropTypes.func.isRequired,
 }
